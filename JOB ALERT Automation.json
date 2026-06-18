@@ -1,0 +1,123 @@
+{
+  "name": "JOB ALERT Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6c68d55c-f990-4352-9d9a-dd2f884111f7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://remotive.com/api/remote-jobs?category=software-dev&search=AI",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d6cc5ad8-e99f-4624-b4fe-53fa9ad05396",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get jobs from the previous node (HTTP Request)\nconst allJobs = items[0].json.jobs || [];\n\n// 🎯 YOUR PREFERRED LOCATIONS\nconst preferredLocations = [\n  'chennai', 'bangalore', 'bengaluru', 'coimbatore',\n  'india', 'tamil nadu', 'karnataka', 'remote', 'anywhere'\n];\n\n// Fresher-friendly skills (B.Tech AI&DS)\nconst skillKeywords = [\n  'AI', 'Machine Learning', 'ML', 'Data Science', 'Data Scientist',\n  'Data Analyst', 'Data Engineer', 'Python', 'Deep Learning',\n  'TensorFlow', 'PyTorch', 'NLP', 'Computer Vision', 'LLM',\n  'Full Stack', 'Full-Stack', 'Backend', 'Software Engineer',\n  'Junior', 'Entry Level', 'Entry-Level', 'Fresher', 'Graduate',\n  'Intern', 'Internship', 'Trainee', 'Associate', 'Developer'\n];\n\n// EXCLUDE senior roles\nconst excludeKeywords = [\n  'Senior', 'Sr.', 'Sr ', 'Lead', 'Principal', 'Manager',\n  'Director', 'Head', 'Architect', '5+ years', '7+ years',\n  '10+ years', 'Expert', 'Staff', 'Distinguished'\n];\n\n// Filter jobs\nconst filteredJobs = allJobs.filter(job => {\n  const title = (job.title || '').toLowerCase();\n  const category = (job.category || '').toLowerCase();\n  const jobType = (job.job_type || '').toLowerCase();\n  const location = (job.candidate_required_location || '').toLowerCase();\n  const text = title + ' ' + category + ' ' + jobType;\n  \n  // Must match at least one skill keyword\n  const matchesSkill = skillKeywords.some(k => text.includes(k.toLowerCase()));\n  \n  // Must NOT match exclude keywords\n  const isNotSenior = !excludeKeywords.some(k => text.includes(k.toLowerCase()));\n  \n  // Location check: Either matches preferred location OR is Remote\n  const matchesLocation = preferredLocations.some(loc => \n    location.includes(loc) || location === '' || location.includes('anywhere')\n  );\n  \n  return matchesSkill && isNotSenior && matchesLocation;\n});\n\n// Sort: Internships first, then full-time\nfilteredJobs.sort((a, b) => {\n  const aIsIntern = (a.title || '').toLowerCase().includes('intern');\n  const bIsIntern = (b.title || '').toLowerCase().includes('intern');\n  if (aIsIntern && !bIsIntern) return -1;\n  if (!aIsIntern && bIsIntern) return 1;\n  return 0;\n});\n\n// Get top 15\nconst topJobs = filteredJobs.slice(0, 15);\n\n// Count internships and full-time\nconst internCount = topJobs.filter(j => (j.title || '').toLowerCase().includes('intern')).length;\nconst fullTimeCount = topJobs.length - internCount;\n\n// Count by location\nconst chennaiJobs = topJobs.filter(j => (j.candidate_required_location || '').toLowerCase().includes('chennai')).length;\nconst bangaloreJobs = topJobs.filter(j => {\n  const loc = (j.candidate_required_location || '').toLowerCase();\n  return loc.includes('bangalore') || loc.includes('bengaluru');\n}).length;\nconst coimbatoreJobs = topJobs.filter(j => (j.candidate_required_location || '').toLowerCase().includes('coimbatore')).length;\nconst remoteJobs = topJobs.filter(j => {\n  const loc = (j.candidate_required_location || '').toLowerCase();\n  return loc.includes('remote') || loc.includes('anywhere') || loc === '';\n}).length;\n\n// Build beautiful HTML email\nlet emailHtml = '<div style=\"font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 20px; background: #f5f5f5;\">';\n\n// Header\nemailHtml += '<div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 10px; text-align: center; color: white;\">';\nemailHtml += '<h1 style=\"margin: 0; font-size: 24px;\">🚀 Your Daily AI/DS Job Alert</h1>';\nemailHtml += '<p style=\"margin: 10px 0 0 0; opacity: 0.9; font-size: 14px;\">Chennai • Bangalore • Coimbatore • Remote</p>';\nemailHtml += '<p style=\"margin: 5px 0 0 0; opacity: 0.8; font-size: 12px;\">Curated for B.Tech AI &amp; Data Science Freshers</p>';\nemailHtml += '</div>';\n\n// Summary Box\nemailHtml += '<div style=\"background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">';\nemailHtml += '<h3 style=\"margin: 0 0 15px 0; color: #2c3e50; text-align: center;\">📊 Today\\'s Summary</h3>';\nemailHtml += '<div style=\"display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap;\">';\n\nemailHtml += '<div style=\"padding: 10px;\"><div style=\"font-size: 28px; font-weight: bold; color: #667eea;\">' + filteredJobs.length + '</div><div style=\"color: #888; font-size: 12px;\">Total Jobs</div></div>';\nemailHtml += '<div style=\"padding: 10px;\"><div style=\"font-size: 28px; font-weight: bold; color: #FF6B6B;\">' + internCount + '</div><div style=\"color: #888; font-size: 12px;\">Internships</div></div>';\nemailHtml += '<div style=\"padding: 10px;\"><div style=\"font-size: 28px; font-weight: bold; color: #4CAF50;\">' + fullTimeCount + '</div><div style=\"color: #888; font-size: 12px;\">Full-time</div></div>';\nemailHtml += '</div>';\n\nemailHtml += '<hr style=\"border: none; border-top: 1px solid #eee; margin: 15px 0;\">';\nemailHtml += '<div style=\"text-align: center; color: #555; font-size: 14px;\"><strong>📍 Location Breakdown:</strong></div>';\nemailHtml += '<div style=\"text-align: center; margin-top: 10px; color: #555; font-size: 13px;\">';\nemailHtml += '🏙️ Chennai: ' + chennaiJobs + ' | ';\nemailHtml += '🌆 Bangalore: ' + bangaloreJobs + ' | ';\nemailHtml += '🏘️ Coimbatore: ' + coimbatoreJobs + ' | ';\nemailHtml += '🌐 Remote: ' + remoteJobs;\nemailHtml += '</div>';\nemailHtml += '</div>';\n\nif (topJobs.length === 0) {\n  emailHtml += '<div style=\"padding: 30px; text-align: center; background: #fff3cd; border-radius: 8px; margin: 20px 0;\">';\n  emailHtml += '<h3 style=\"color: #856404; margin: 0;\">😔 No matching jobs found today</h3>';\n  emailHtml += '<p style=\"color: #856404; margin: 10px 0 0 0;\">Don\\'t worry! New jobs are posted daily. Check back tomorrow!</p>';\n  emailHtml += '<p style=\"color: #856404; margin: 5px 0 0 0; font-size: 13px;\">Try: Expanding search to \"Anywhere in India\" or check LinkedIn directly</p>';\n  emailHtml += '</div>';\n} else {\n  topJobs.forEach((job, i) => {\n    const isInternship = (job.title || '').toLowerCase().includes('intern');\n    const badgeColor = isInternship ? '#FF6B6B' : '#4CAF50';\n    const badgeText = isInternship ? '🎓 INTERNSHIP' : '💼 FULL-TIME';\n    const jobLocation = job.candidate_required_location || 'Remote';\n    \n    // Location emoji\n    let locEmoji = '📍';\n    const locLower = jobLocation.toLowerCase();\n    if (locLower.includes('chennai')) locEmoji = '🏙️';\n    else if (locLower.includes('bangalore') || locLower.includes('bengaluru')) locEmoji = '🌆';\n    else if (locLower.includes('coimbatore')) locEmoji = '🏘️';\n    else if (locLower.includes('remote') || locLower.includes('anywhere')) locEmoji = '🌐';\n    \n    emailHtml += '<div style=\"margin-bottom: 20px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);\">';\n    emailHtml += '<div style=\"display: inline-block; background: ' + badgeColor + '; color: white; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-bottom: 8px;\">' + badgeText + '</div>';\n    emailHtml += '<h3 style=\"color: #2c3e50; margin: 5px 0 10px 0; font-size: 17px;\">' + (i+1) + '. ' + (job.title || 'N/A') + '</h3>';\n    emailHtml += '<p style=\"margin: 5px 0; color: #555; font-size: 14px;\"><strong>🏢 Company:</strong> ' + (job.company_name || 'N/A') + '</p>';\n    emailHtml += '<p style=\"margin: 5px 0; color: #555; font-size: 14px;\"><strong>' + locEmoji + ' Location:</strong> ' + jobLocation + '</p>';\n    emailHtml += '<p style=\"margin: 5px 0; color: #555; font-size: 14px;\"><strong>⏰ Type:</strong> ' + (job.job_type || 'N/A') + '</p>';\n    \n    if (job.salary && job.salary !== '') {\n      emailHtml += '<p style=\"margin: 5px 0; color: #555; font-size: 14px;\"><strong>💰 Salary:</strong> ' + job.salary + '</p>';\n    }\n    \n    emailHtml += '<a href=\"' + job.url + '\" style=\"background: ' + badgeColor + '; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 12px; font-weight: bold;\">Apply Now →</a>';\n    emailHtml += '</div>';\n  });\n}\n\n// Footer\nemailHtml += '<div style=\"text-align: center; padding: 20px; color: #888; font-size: 12px; margin-top: 30px;\">';\nemailHtml += '<p style=\"margin: 5px 0;\">🤖 Generated automatically by your n8n workflow</p>';\nemailHtml += '<p style=\"margin: 5px 0;\">💡 <strong>Pro Tip:</strong> Apply within 24 hours for best chances!</p>';\nemailHtml += '<p style=\"margin: 5px 0;\">📧 Made for: B.Tech AI &amp; DS Freshers in Tamil Nadu &amp; Bangalore</p>';\nemailHtml += '</div>';\nemailHtml += '</div>';\n\n// Build subject\nconst emailSubject = '🎯 ' + filteredJobs.length + ' Jobs for You (' + internCount + ' Internships) - ' + new Date().toLocaleDateString();\n\n// Return the data\nreturn [{\n  json: {\n    subject: emailSubject,\n    html: emailHtml\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        16
+      ],
+      "id": "ac7c72b4-a343-441f-8de4-5f7fe2ef3bb5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "fromEmail": "yaminiraju796@gmail.com",
+        "toEmail": "arthiyamini16@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        608,
+        16
+      ],
+      "id": "43b053f0-c2e1-4d73-85be-efce1515e79c",
+      "name": "Send an Email",
+      "webhookId": "62f6c73a-10a4-4cf8-846f-41b1ce44218f",
+      "credentials": {
+        "smtp": {
+          "id": "4fxAZyagmOJ3iw45",
+          "name": "SMTP account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "93d3cb7a-7085-4d31-9afb-10b930d25060",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ff853d0e82f981735b0fec5c337f632972e0c5b67de52c7934aa2cb07e7e1635"
+  },
+  "id": "T6U0c1jxJdD4pEeJ",
+  "tags": []
+}
