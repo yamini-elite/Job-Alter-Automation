@@ -1,4 +1,4 @@
-\# 🤖 AI Job Alert - Daily Email Automation
+\#  AI Job Alert - Daily Email Automation
 
 
 
@@ -6,21 +6,21 @@ An automated n8n workflow that sends personalized AI/ML/Data Science job alerts 
 
 
 
-\## ✨ Features
+\## Features
 
 
 
-\- 🎯 \*\*Smart Filtering\*\* - Only shows jobs matching your skills (AI, ML, Data Science, Python, etc.)
+\-  \*\*Smart Filtering\*\* - Only shows jobs matching your skills (AI, ML, Data Science, Python, etc.)
 
-\- 📍 \*\*Location-Based\*\* - Filters for Chennai, Bangalore, Coimbatore, and Remote roles
+\-  \*\*Location-Based\*\* - Filters for Chennai, Bangalore, Coimbatore, and Remote roles
 
-\- 🎓 \*\*Fresher-Friendly\*\* - Excludes senior positions, highlights internships
+\-  \*\*Fresher-Friendly\*\* - Excludes senior positions, highlights internships
 
-\- 🎨 \*\*Beautiful HTML Emails\*\* - Professional design with badges, cards, and location breakdown
+\-  \*\*Beautiful HTML Emails\*\* - Professional design with badges, cards, and location breakdown
 
-\- 💰 \*\*100% Free\*\* - Uses only free tools and APIs
+\-  \*\*100% Free\*\* - Uses only free tools and APIs
 
-\- ⏰ \*\*Automated\*\* - Runs daily without any manual work
+\-  \*\*Automated\*\* - Runs daily without any manual work
 
 
 
